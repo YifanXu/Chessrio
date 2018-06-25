@@ -13,6 +13,10 @@ namespace Assets
         public GameObject piece;
         public Player side;
         public bool moved = false;
+        /// <summary>
+        /// Only used for pawns
+        /// </summary>
+        public int doubleStepped;
 
         public Piece()
         {

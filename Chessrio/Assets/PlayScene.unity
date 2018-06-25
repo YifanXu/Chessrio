@@ -761,7 +761,8 @@ MonoBehaviour:
   king:
   - {fileID: 21300000, guid: d4b31e14f98b6e14c80b32ee164ba084, type: 3}
   - {fileID: 21300012, guid: d4b31e14f98b6e14c80b32ee164ba084, type: 3}
-  fileLoadPath: C:\CodeStuff\Chessrio\pieceLocation.txt
+  fileLoadPath: C:/Chessrio/Chessrio/pieceLocation.txt
+  turn: 0
 --- !u!212 &678475350
 SpriteRenderer:
   m_ObjectHideFlags: 0

@@ -121,6 +121,7 @@ public class GameControllerScript : MonoBehaviour
             {
                 ClearCoverSquares();
                 var attemptSelected = board[pressedCoord.x, pressedCoord.y];
+                //If the player selected their own piece
                 if (attemptSelected != null && attemptSelected.side == turn)
                 {
                     selected = attemptSelected;
@@ -147,12 +148,22 @@ public class GameControllerScript : MonoBehaviour
                         selectorSquares.Add(newSquare);
                     }
                 }
+                //If the player clicked a square or an enemy as destination while one of their units is selected
                 else if (selected != null)
                 {
+                    //If the player has selected a valid "normal" move
                     foreach (Coords coordinate in validDestos)
                     {
                         if (pressedCoord.x == coordinate.x && pressedCoord.y == coordinate.y)
                         {
+                            if(selected is Pawn)
+                            {
+                                Pawn p = selected as Pawn;
+                                if(Mathf.Abs(pressedCoord.y - selected.location.y) == 2)
+                                {
+                                    p.doubleStepped = 2;
+                                }
+                            }
                             board[selected.location.x, selected.location.y] = null;
                             selected.location = pressedCoord;
                             Vector3 newPieceLoc = new Vector3(cellSize * (pressedCoord.x - 3.5f), cellSize * (pressedCoord.y - 3.5f));
@@ -171,20 +182,11 @@ public class GameControllerScript : MonoBehaviour
                                 pieces.Remove(destinationPiece);
                                 Destroy(destinationPiece.piece);
                             }
-                            if (turn == Player.White)
-                            {
-                                turn = Player.Black;
-                                Debug.Log("Black Turn");
-                            }
-                            else
-                            {
-                                turn = Player.White;
-                                Debug.Log("White Turn");
-                            }
-                            selected = null;
+                            SwitchTurn();
                             return;
                         }
                     }
+                    //If the player has selected a valid "special" move (En passant. Castling, Pawn Promotion)
                     foreach (Coords coordinate in specials)
                     {
                         if (pressedCoord.x == coordinate.x && pressedCoord.y == coordinate.y)
@@ -241,19 +243,16 @@ public class GameControllerScript : MonoBehaviour
                                     promotionMenu.SetActive(true);
                                     return;
                                 }
+                                //En passant?
+                                else
+                                {
+                                    Piece capturedPawn = board[pressedCoord.x, pressedCoord.y - 1];
+                                    board[pressedCoord.x, pressedCoord.y - 1] = null;
+                                    Destroy(capturedPawn.piece);
+                                    pieces.Remove(capturedPawn);
+                                }
                             }
-                            if (turn == Player.White)
-                            {
-                                turn = Player.Black;
-                                Debug.Log("Black Turn");
-                            }
-                            else
-                            {
-                                turn = Player.White;
-                                Debug.Log("White Turn");
-                            }
-                            selected = null;
-                            return;
+                            SwitchTurn();
                         }
                     }
                 }
@@ -335,5 +334,27 @@ public class GameControllerScript : MonoBehaviour
     public void Quit()
     {
         Application.Quit();
+    }
+
+    private void SwitchTurn()
+    {
+        if (turn == Player.White)
+        {
+            turn = Player.Black;
+            Debug.Log("Black Turn");
+        }
+        else
+        {
+            turn = Player.White;
+            Debug.Log("White Turn");
+        }
+        foreach(Piece piece in pieces)
+        {
+            if(piece.doubleStepped > 0)
+            {
+                piece.doubleStepped--;
+            }
+        }
+        selected = null;
     }
 }

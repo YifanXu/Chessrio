@@ -24,6 +24,7 @@ namespace Assets
             {
                 rankMovement = 1;
             }
+            //move Straight Forward
             if (board[x, rankMovement + y] == null)
             {
                 if ((y == 6 && side == Player.White) || (y == 1 && side == Player.Black))
@@ -39,6 +40,7 @@ namespace Assets
                     coords.Add(new Coords(x, rankMovement + y));
                 }
             }
+            //Sideways Eating (To right)
             if (x < 7 && board[x + 1, rankMovement + y] != null && board[x + 1, rankMovement + y].side != this.side)
             {
                 if ((y == 6 && side == Player.White) || (y == 1 && side == Player.Black))
@@ -50,6 +52,12 @@ namespace Assets
                     coords.Add(new Coords(x + 1, rankMovement + y));
                 }
             }
+            // Enpassant (To right)
+            else if (x < 7 && board[x + 1, y] != null && board[x + 1, y].side != side && board[x + 1, y].doubleStepped != 0)
+            {
+                specials.Add(new Coords(x + 1, rankMovement + y));
+            }
+            //Sideways Eating (To left)
             if (x > 0 && board[x - 1, rankMovement + y] != null && board[x - 1, rankMovement + y].side != this.side)
             {
                 if ((y == 6 && side == Player.White) || (y == 1 && side == Player.Black))
@@ -61,6 +69,12 @@ namespace Assets
                     coords.Add(new Coords(x - 1, rankMovement + y));
                 }
             }
+            // Enpassant (To left)
+            else if (x > 0 && board[x - 1, y] != null && board[x - 1, y].side != side && board[x - 1, y].doubleStepped != 0)
+            {
+                specials.Add(new Coords(x - 1, rankMovement + y));
+            }
+
 
             return coords;
         }
