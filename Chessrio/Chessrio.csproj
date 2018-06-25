@@ -224,6 +224,7 @@
     <Compile Include="Assets\GameControllerScript.cs" />
     <Compile Include="Assets\King.cs" />
     <Compile Include="Assets\Knight.cs" />
+    <Compile Include="Assets\LogScript.cs" />
     <Compile Include="Assets\Pawn.cs" />
     <Compile Include="Assets\Piece.cs" />
     <Compile Include="Assets\PieceBehavior.cs" />

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 using Assets;
 using System;
 
@@ -22,6 +23,8 @@ public class GameControllerScript : MonoBehaviour
     public GameObject pausingCover;
     public GameObject promotionMenu;
     public GameObject[] winMenus;
+    public GameObject loadMenu;
+    public GameObject loadInput;
     public Sprite[] pawn = new Sprite[2];
     public Sprite[] rook = new Sprite[2];
     public Sprite[] knight = new Sprite[2];
@@ -58,6 +61,7 @@ public class GameControllerScript : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        fileLoadPath = PlayerPrefs.GetString("loadPath", fileLoadPath);
         instance = this;
         boardCentreX = this.transform.position.x;
         boardCentreY = this.transform.position.y;
@@ -76,38 +80,15 @@ public class GameControllerScript : MonoBehaviour
         board = new Piece[8, 8];
         pieces = new List<Piece>();
 
-        string[] pieceLocs = File.ReadAllLines(fileLoadPath);
-        foreach (string line in pieceLocs)
+        
+        if (File.Exists(fileLoadPath))
         {
-            string[] pars = line.Split(' ');
-            Player side;
-            if (pars[0] == "b")
-            {
-                side = Player.Black;
-            }
-            else
-            {
-                side = Player.White;
-            }
-            Piece type = pieceName[pars[1]];
-            int x = int.Parse(pars[2]);
-            int y = int.Parse(pars[3]);
-            if (board[x, y] != null)
-            {
-                throw new ArgumentException(String.Format("Duplicate Piece detected at ({0},{1})", x, y));
-            }
-            System.Reflection.ConstructorInfo a = type.GetType().GetConstructor(new Type[0]);
-            Piece newPiece = a.Invoke(new object[0]) as Piece;
-            newPiece.location = new Coords(x, y);
-            newPiece.side = side;
-
-            board[x, y] = newPiece;
-            pieces.Add(newPiece);
-
-            Vector3 newPieceLoc = new Vector3(cellSize * (x - 3.5f), cellSize * (y - 3.5f));
-            Sprite newSprite = pieceSprites[pars[1]][(int)side];
-            newPiece.piece = Instantiate(samplePiece, newPieceLoc, default(Quaternion));
-            newPiece.piece.GetComponent<SpriteRenderer>().sprite = newSprite;
+            Load();
+        }
+        else
+        {
+            pausingCover.SetActive(true);
+            loadMenu.SetActive(true);
         }
     }
 
@@ -156,10 +137,10 @@ public class GameControllerScript : MonoBehaviour
                     {
                         if (pressedCoord.x == coordinate.x && pressedCoord.y == coordinate.y)
                         {
-                            if(selected is Pawn)
+                            if (selected is Pawn)
                             {
                                 Pawn p = selected as Pawn;
-                                if(Mathf.Abs(pressedCoord.y - selected.location.y) == 2)
+                                if (Mathf.Abs(pressedCoord.y - selected.location.y) == 2)
                                 {
                                     p.doubleStepped = 2;
                                 }
@@ -200,7 +181,7 @@ public class GameControllerScript : MonoBehaviour
                             selected.moved = true;
                             if (destinationPiece != null)
                             {
-                                if(destinationPiece is King)
+                                if (destinationPiece is King)
                                 {
                                     pausingCover.SetActive(true);
                                     winMenus[(int)turn].SetActive(true);
@@ -257,6 +238,60 @@ public class GameControllerScript : MonoBehaviour
                     }
                 }
             }
+        }
+    }
+
+    public void TryLoad()
+    {
+        fileLoadPath = loadInput.GetComponent<InputField>().text;
+        if(File.Exists(fileLoadPath))
+        {
+            PlayerPrefs.SetString("loadPath", fileLoadPath);
+            Load();
+            pausingCover.SetActive(false);
+            loadMenu.SetActive(false);
+        }
+        else
+        {
+            loadInput.GetComponent<InputField>().text = string.Empty;
+            loadInput.GetComponent<InputField>().placeholder.GetComponent<Text>().text = "Invalid location, try again";
+        }
+    }
+
+    private void Load()
+    {
+        string[] pieceLocs = File.ReadAllLines(fileLoadPath);
+        foreach (string line in pieceLocs)
+        {
+            string[] pars = line.Split(' ');
+            Player side;
+            if (pars[0] == "b")
+            {
+                side = Player.Black;
+            }
+            else
+            {
+                side = Player.White;
+            }
+            Piece type = pieceName[pars[1]];
+            int x = int.Parse(pars[2]);
+            int y = int.Parse(pars[3]);
+            if (board[x, y] != null)
+            {
+                throw new ArgumentException(String.Format("Duplicate Piece detected at ({0},{1})", x, y));
+            }
+            System.Reflection.ConstructorInfo a = type.GetType().GetConstructor(new Type[0]);
+            Piece newPiece = a.Invoke(new object[0]) as Piece;
+            newPiece.location = new Coords(x, y);
+            newPiece.side = side;
+
+            board[x, y] = newPiece;
+            pieces.Add(newPiece);
+
+            Vector3 newPieceLoc = new Vector3(cellSize * (x - 3.5f), cellSize * (y - 3.5f));
+            Sprite newSprite = pieceSprites[pars[1]][(int)side];
+            newPiece.piece = Instantiate(samplePiece, newPieceLoc, default(Quaternion));
+            newPiece.piece.GetComponent<SpriteRenderer>().sprite = newSprite;
         }
     }
 
@@ -348,13 +383,45 @@ public class GameControllerScript : MonoBehaviour
             turn = Player.White;
             Debug.Log("White Turn");
         }
-        foreach(Piece piece in pieces)
+        foreach (Piece piece in pieces)
         {
-            if(piece.doubleStepped > 0)
+            if (piece.doubleStepped > 0)
             {
                 piece.doubleStepped--;
             }
         }
         selected = null;
+    }
+
+    private void Check()
+    {
+
+    }
+
+    private List<Piece> Threatened(Coords coord)
+    {
+        List<Piece> threats = new List<Piece>();
+        foreach (Piece p in pieces)
+        {
+            IList<Coords> valids;
+            if (p.GetValidLocations(board, out valids).Contains(coord))
+            {
+                threats.Add(p);
+            }
+        }
+        return threats;
+    }
+    private List<Piece> Thraetened(Coords coord, Type pieceType)
+    {
+        List<Piece> threats = new List<Piece>();
+        foreach (Piece p in pieces)
+        {
+            IList<Coords> valids;
+            if (p.GetType() == pieceType && p.GetValidLocations(board, out valids).Contains(coord))
+            {
+                threats.Add(p);
+            }
+        }
+        return threats;
     }
 }
