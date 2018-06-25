@@ -390,12 +390,35 @@ public class GameControllerScript : MonoBehaviour
                 piece.doubleStepped--;
             }
         }
+        Check();
         selected = null;
     }
 
     private void Check()
     {
-
+        foreach(Piece k in pieces)
+        {
+            if(k is King)
+            {
+                var threats = Threatened(k.location);
+                bool isThreatened = false;
+                foreach(var threat in threats)
+                {
+                    if(threat.side != k.side)
+                    {
+                        isThreatened = true;
+                    }
+                }
+                if (isThreatened)
+                {
+                    k.endangeredSquare = Instantiate(redCover, k.piece.transform.position, default(Quaternion));
+                }
+                else if(k.endangeredSquare != null)
+                {
+                    Destroy(k.piece);
+                }
+            }
+        }
     }
 
     private List<Piece> Threatened(Coords coord)

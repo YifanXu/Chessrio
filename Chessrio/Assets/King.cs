@@ -7,6 +7,7 @@ namespace Assets
 {
     class King: Piece
     {
+
         public override IList<Coords> GetValidLocations(Piece[,] board, out IList<Coords> specials)
         {
             specials = new List<Coords>();

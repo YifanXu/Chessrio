@@ -17,6 +17,10 @@ namespace Assets
         /// Only used for pawns
         /// </summary>
         public int doubleStepped;
+        /// <summary>
+        /// Only used for kings
+        /// </summary>\
+        public GameObject endangeredSquare;
 
         public Piece()
         {
